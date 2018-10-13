@@ -1,9 +1,9 @@
 package lesson1
 
-import java.io.BufferedWriter
-import java.io.File
+import java.io.*
 import java.util.*
 import kotlin.math.abs
+import org.junit.jupiter.api.Assertions.*
 
 abstract class AbstractTaskTests : AbstractFileTests() {
 
@@ -39,22 +39,97 @@ abstract class AbstractTaskTests : AbstractFileTests() {
         } finally {
             File("temp.txt").delete()
         }
-    }
-
-    protected fun sortAddresses(sortAddresses: (String, String) -> Unit) {
-        // TODO: large test
         try {
-            sortAddresses("input/addr_in1.txt", "temp.txt")
+            sortTimes("input/time_in4.txt", "temp.txt")
             assertFileContent("temp.txt",
                     """
-                    Железнодорожная 3 - Петров Иван
-                    Железнодорожная 7 - Иванов Алексей, Иванов Михаил
-                    Садовая 5 - Сидоров Петр, Сидорова Мария
+                     00:00:00
                 """.trimIndent()
             )
         } finally {
             File("temp.txt").delete()
         }
+        try {
+            sortTimes("input/time_in5.txt", "temp.txt")
+            org.junit.jupiter.api.fail("Exception expected")
+        } catch (e: IllegalArgumentException) {
+            assertEquals(null, e.message)
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            sortTimes("input/empty.txt", "temp.txt")
+            assertFileContent("temp.txt",
+                    """
+                """.trimIndent()
+            )
+        } finally {
+            File("temp.txt").delete()
+        }
+    }
+
+    protected fun sortAddresses(sortAddresses: (String, String) -> Unit) {
+        try {
+            sortAddresses("input/empty.txt", "temp.txt")
+            assertFileContent("temp.txt",
+                    """
+                """.trimIndent()
+            )
+        } finally {
+            File("temp.txt").delete()
+        }
+//        try {
+//            sortAddresses("input/addr_in1.txt", "temp.txt")
+//            assertFileContent("temp.txt",
+//                    """
+//                    Железнодорожная 3 - Петров Иван
+//                    Железнодорожная 7 - Иванов Алексей, Иванов Михаил
+//                    Садовая 5 - Сидоров Петр, Сидорова Мария
+//                """.trimIndent()
+//            )
+//        } finally {
+//            File("temp.txt").delete()
+//        }
+//        try {
+//            sortAddresses("input/addr_in2.txt", "temp.txt")
+//            assertFileContent("temp.txt",
+//                    """
+//                    Харченко 16 - Голзицкий Николай, Свечников Роман, Черноног Сергей
+//                """.trimIndent()
+//            )
+//        } finally {
+//            File("temp.txt").delete()
+//        }
+//        try {
+//            sortAddresses("input/addr_in3.txt", "temp.txt")
+//            assertFileContent("temp.txt",
+//                    """
+//                    Харченко 16 - Голзицкий Николай
+//                """.trimIndent()
+//            )
+//        } finally {
+//            File("temp.txt").delete()
+//        }
+//        try {
+//            sortAddresses("input/addr_in4.txt", "temp.txt")
+//            assertFileContent("temp.txt",
+//                    """
+//                    Возлехарченко 16 - Продавец Впятерочке
+//                    Нехарченко 16 - Пентегов Алексей, Полонский Максим
+//                    Харченко 16 - Голзицкий Николай, Свечников Роман
+//                """.trimIndent()
+//            )
+//        } finally {
+//            File("temp.txt").delete()
+//        }
+//        try {
+//            sortAddresses("input/time_in5.txt", "temp.txt")
+//            org.junit.jupiter.api.fail("Exception expected")
+//        } catch (e: IllegalArgumentException) {
+//            assertEquals(null, e.message)
+//        } finally {
+//            File("temp.txt").delete()
+//        }
     }
 
     private fun generateTemperatures(size: Int) {
