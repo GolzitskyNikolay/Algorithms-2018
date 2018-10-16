@@ -52,17 +52,16 @@ abstract class AbstractTaskTests : AbstractFileTests() {
         try {
             sortTimes("input/time_in5.txt", "temp.txt")
             org.junit.jupiter.api.fail("Exception expected")
-        } catch (e: IllegalArgumentException) {
+        } catch (e: Exception) {
             assertEquals(null, e.message)
         } finally {
             File("temp.txt").delete()
         }
         try {
             sortTimes("input/empty.txt", "temp.txt")
-            assertFileContent("temp.txt",
-                    """
-                """.trimIndent()
-            )
+            org.junit.jupiter.api.fail("Exception expected")
+        } catch (e: IllegalArgumentException) {
+            assertEquals(null, e.message)
         } finally {
             File("temp.txt").delete()
         }
@@ -71,10 +70,9 @@ abstract class AbstractTaskTests : AbstractFileTests() {
     protected fun sortAddresses(sortAddresses: (String, String) -> Unit) {
         try {
             sortAddresses("input/empty.txt", "temp.txt")
-            assertFileContent("temp.txt",
-                    """
-                """.trimIndent()
-            )
+            org.junit.jupiter.api.fail("Exception expected")
+        } catch (e: IllegalArgumentException) {
+            assertEquals(null, e.message)
         } finally {
             File("temp.txt").delete()
         }
@@ -127,6 +125,17 @@ abstract class AbstractTaskTests : AbstractFileTests() {
             org.junit.jupiter.api.fail("Exception expected")
         } catch (e: IllegalArgumentException) {
             assertEquals(null, e.message)
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            sortAddresses("input/addr_in6.txt", "temp.txt")
+            assertFileContent("temp.txt",
+                    """
+                        Садовая 5 - Сидоров Петр, Сидорова Мария
+                        Харченко 16 - Голзицкий Николай, Никитин Илья, Свечников Роман, Черноног Сергей
+                """.trimIndent()
+            )
         } finally {
             File("temp.txt").delete()
         }
@@ -201,6 +210,14 @@ abstract class AbstractTaskTests : AbstractFileTests() {
 
     protected fun sortSequence(sortSequence: (String, String) -> Unit) {
         try {
+            sortSequence("input/empty.txt", "temp.txt")
+            org.junit.jupiter.api.fail("Exception expected")
+        } catch (e: IllegalArgumentException) {
+            assertEquals(null, e.message)
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
             sortSequence("input/time_in5.txt", "temp.txt")
             org.junit.jupiter.api.fail("Exception expected")
         } catch (e: IllegalArgumentException) {
@@ -236,6 +253,21 @@ abstract class AbstractTaskTests : AbstractFileTests() {
                         12
                         12
                         12
+                    """.trimIndent())
+        } finally {
+            File("temp.txt").delete()
+        }
+        try {
+            sortSequence("input/seq_in3.txt", "temp.txt")
+            assertFileContent("temp.txt",
+                    """
+                        9289
+                        45150
+                        55666
+                        97304
+                        70078
+                        104142
+                        104142
                     """.trimIndent())
         } finally {
             File("temp.txt").delete()

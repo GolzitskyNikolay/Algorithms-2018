@@ -38,39 +38,33 @@ public class JavaTasks {
      * <p>
      * <p>
      * Collections.sort() использует сортировку слиянием, также перебирается каждая строка в файле =>
-     * трудоёмкость алгоритма = О(n*log(n)) + О(n). Ресурсоёмкость = O(n), т.к. в списке хранится n элементов.
+     * трудоёмкость алгоритма = О(n*log(n)). Ресурсоёмкость = O(n), т.к. в списке хранится n элементов.
      */
-    static public void sortTimes(String inputName, String outputName) {
+    static public void sortTimes(String inputName, String outputName) throws Exception {
         List<Integer> resultList = new ArrayList<>();
         StringBuilder stringBuilder = new StringBuilder();
         Pattern pattern = Pattern.compile("(([0-1][0-9])|([2][0-3]))(:[0-5][0-9]){2}");
-        try (BufferedReader reader = new BufferedReader(new FileReader(new File(inputName)))) {
-            String line = reader.readLine();
-            while (line != null) {                                                          //O(n)
-                if (!pattern.matcher(line).matches()) throw new IllegalArgumentException();
-                Arrays.stream(line.split(":")).forEach(stringBuilder::append);
-                resultList.add(Integer.parseInt(String.valueOf(stringBuilder)));
-                line = reader.readLine();
-                stringBuilder.setLength(0);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        BufferedReader reader = new BufferedReader(new FileReader(new File(inputName)));
+        String line = reader.readLine();
+        if (line == null) throw new IllegalArgumentException();
+        while (line != null) {                                                              //O(n)
+            if (!pattern.matcher(line).matches()) throw new IllegalArgumentException();
+            Arrays.stream(line.split(":")).forEach(stringBuilder::append);
+            resultList.add(Integer.parseInt(String.valueOf(stringBuilder)));
+            line = reader.readLine();
+            stringBuilder.setLength(0);
         }
+        reader.close();
         Collections.sort(resultList);                                                       //O(n*log(n))
-        try (FileWriter fileWriter = new FileWriter(outputName)) {
-            for (int j = 0; j <= resultList.size() - 1; j++) {                              //O(n)
-                stringBuilder.append(resultList.get(j));
-                while (stringBuilder.length() != 6) {
-                    stringBuilder.insert(0, "0");
-                }
-                stringBuilder.insert(2, ":");
-                stringBuilder.insert(5, ":");
-                fileWriter.write(String.valueOf(stringBuilder) + "\n");
-                stringBuilder.setLength(0);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        FileWriter fileWriter = new FileWriter(outputName);
+        for (int j = 0; j <= resultList.size() - 1; j++) {                                  //O(n)
+            stringBuilder.append(String.format("%06d", resultList.get(j)));
+            stringBuilder.insert(2, ":");
+            stringBuilder.insert(5, ":");
+            fileWriter.write(String.valueOf(stringBuilder) + "\n");
+            stringBuilder.setLength(0);
         }
+        fileWriter.close();
     }
 
     /**
@@ -100,45 +94,42 @@ public class JavaTasks {
      * В случае обнаружения неверного формата файла бросить любое исключение.
      * <p>
      * <p>
-     * Трудоёмкость алгоритма = О(n*log(n)) + О(n). Ресурсоёмкость = O(n).
+     * Трудоёмкость алгоритма = О(n*log(n)). Ресурсоёмкость = O(n).
      */
-    static public void sortAddresses(String inputName, String outputName) {
+    static public void sortAddresses(String inputName, String outputName) throws Exception {
         File input = new File(inputName);
         StringBuilder stringBuilder = new StringBuilder();
         List<String> resultList = new ArrayList<>();
         Pattern pattern = Pattern.compile("([А-Я][а-я]* ){2}- [А-Я][а-я]* [1-9]+");
-        try (BufferedReader reader = new BufferedReader(new FileReader(input))) {
-            String line = reader.readLine();
-            while (line != null) {                                                              //O(n)
-                if (!pattern.matcher(line).matches()) throw new IllegalArgumentException();
-                String[] strings = line.split(" ");
-                stringBuilder.append(strings[3]).append(" ").append(strings[4]).append(" - ");
-                stringBuilder.append(strings[0]).append(" ").append(strings[1]);
-                resultList.add(String.valueOf(stringBuilder));
-                line = reader.readLine();
-                stringBuilder.setLength(0);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        BufferedReader reader = new BufferedReader(new FileReader(input));
+        String line = reader.readLine();
+        if (line == null) throw new IllegalArgumentException();
+        while (line != null) {                                                                  //O(n)
+            if (!pattern.matcher(line).matches()) throw new IllegalArgumentException();
+            String[] strings = line.split(" ");
+            stringBuilder.append(strings[3]).append(" ").append(strings[4]).append(" - ");
+            stringBuilder.append(strings[0]).append(" ").append(strings[1]);
+            resultList.add(String.valueOf(stringBuilder));
+            line = reader.readLine();
+            stringBuilder.setLength(0);
         }
+        reader.close();
         Collections.sort(resultList);                                                           //O(n*log(n))
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputName))) {
-            if (resultList.size() != 0) {
-                bufferedWriter.write(resultList.get(0));
-            }
-            for (int i = 1; i < resultList.size(); i++) {                                       //O(n)
-                stringBuilder.append("\n").append(resultList.get(i));
-                String[] elementOfResultList = resultList.get(i).split(" - ");
-                if (resultList.get(i - 1).split(" - ")[0].equals(elementOfResultList[0])) {
-                    stringBuilder.setLength(0);
-                    stringBuilder.append(", ").append(elementOfResultList[1]);
-                }
-                bufferedWriter.write(String.valueOf(stringBuilder));
-                stringBuilder.setLength(0);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputName));
+        if (resultList.size() != 0) {
+            bufferedWriter.write(resultList.get(0));
         }
+        for (int i = 1; i < resultList.size(); i++) {                                           //O(n)
+            stringBuilder.append("\n").append(resultList.get(i));
+            String[] elementOfResultList = resultList.get(i).split(" - ");
+            if (resultList.get(i - 1).split(" - ")[0].equals(elementOfResultList[0])) {
+                stringBuilder.setLength(0);
+                stringBuilder.append(", ").append(elementOfResultList[1]);
+            }
+            bufferedWriter.write(String.valueOf(stringBuilder));
+            stringBuilder.setLength(0);
+        }
+        bufferedWriter.close();
     }
 
     /**
@@ -174,51 +165,51 @@ public class JavaTasks {
      * <p>
      * Трудоёмкость = О(n). Ресурсоёмкость = О(n) (список элементов О(n) + массив элементов О(n)).
      */
-    static public void sortTemperatures(String inputName, String outputName) {
+    static public void sortTemperatures(String inputName, String outputName) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
         List<Integer> list = new ArrayList<>();
         File input = new File(inputName);
         int max = -2731;
         int min = 5001;
         Pattern pattern = Pattern.compile("(-)?[0-9]+.[0-9]");
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputName))) {
-            BufferedReader reader = new BufferedReader(new FileReader(input));
-            String line = reader.readLine();
-            while (line != null) {                                                               //O(n)
-                if (!pattern.matcher(line).matches()) throw new IllegalArgumentException();
-                String[] strings = line.split("\\.");
-                int number = Integer.parseInt(strings[0] + strings[1]);
-                if (number > max) {
-                    max = number;
-                } else if (number < min) {
-                    min = number;
-                }
-                list.add(number);
-                line = reader.readLine();
+        BufferedReader reader = new BufferedReader(new FileReader(input));
+        String line = reader.readLine();
+        if (line == null) throw new IllegalArgumentException();
+        while (line != null) {                                                               //O(n)
+            if (!pattern.matcher(line).matches()) throw new IllegalArgumentException();
+            String[] strings = line.split("\\.");
+            int number = Integer.parseInt(strings[0] + strings[1]);
+            if (number > max) {
+                max = number;
+            } else if (number < min) {
+                min = number;
             }
-            int[] newArray = new int[max - min + 1];                                              //O(n)
-            for (int element : list) {
-                newArray[element - min]++;
-            }
-            for (int i = 0; i < newArray.length; i++) {                                          //O(n)
-                int count = newArray[i];
-                if (count != 0) {
-                    stringBuilder.append(i + min);
-                    if (String.valueOf((i + min)).matches("(-)?[0-9]")) {
-                        stringBuilder.insert(stringBuilder.length() - 1, "0.");
-                    } else {
-                        stringBuilder.insert(stringBuilder.length() - 1, ".");
-                    }
-                }
-                while (count != 0) {
-                    bufferedWriter.write(stringBuilder + "\n");
-                    count--;
-                }
-                stringBuilder.setLength(0);
-            }
-        } catch (IOException e) {
-            e.getMessage();
+            list.add(number);
+            line = reader.readLine();
         }
+        reader.close();
+        int[] newArray = new int[max - min + 1];                                              //O(n)
+        for (int element : list) {
+            newArray[element - min]++;
+        }
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputName));
+        for (int i = 0; i < newArray.length; i++) {                                          //O(n)
+            int count = newArray[i];
+            if (count != 0) {
+                stringBuilder.append(i + min);
+                if (String.valueOf((i + min)).matches("(-)?[0-9]")) {
+                    stringBuilder.insert(stringBuilder.length() - 1, "0.");
+                } else {
+                    stringBuilder.insert(stringBuilder.length() - 1, ".");
+                }
+            }
+            while (count != 0) {
+                bufferedWriter.write(stringBuilder + "\n");
+                count--;
+            }
+            stringBuilder.setLength(0);
+        }
+        bufferedWriter.close();
     }
 
     /**
@@ -251,62 +242,52 @@ public class JavaTasks {
      * 2
      * <p>
      * <p>
-     * Трудоёмкость = О(n), Ресурсоёмкость = О(n).
+     * Трудоёмкость = О(n*log(n)), Ресурсоёмкость = О(n).
      */
-    static public void sortSequence(String inputName, String outputName) {
-        List<Integer> list = new ArrayList<>();
+    static public void sortSequence(String inputName, String outputName) throws Exception {
         File input = new File(inputName);
-        int maxElementInString = 1;
-        int minElementInString = 1;
+        List<Integer> list = new ArrayList<>();
         Pattern pattern = Pattern.compile("[1-9][0-9]*");
-        try (BufferedReader reader = new BufferedReader(new FileReader(input))) {
-            String line = reader.readLine();
+        BufferedReader reader = new BufferedReader(new FileReader(input));
+        String line = reader.readLine();
+        if (line == null || !pattern.matcher(line).matches()) throw new IllegalArgumentException();
+        while (line != null) {                                                                      //O(n)
             if (!pattern.matcher(line).matches()) throw new IllegalArgumentException();
-            minElementInString = Integer.parseInt(line);
-            while (line != null) {                                                               //O(n)
-                if (!pattern.matcher(line).matches()) throw new IllegalArgumentException();
-                int numberInString = Integer.parseInt(line);
-                if (numberInString < minElementInString) {
-                    minElementInString = numberInString;
-                } else if (numberInString > maxElementInString) {
-                    maxElementInString = numberInString;
+            list.add(Integer.parseInt(line));
+            line = reader.readLine();
+        }
+        reader.close();
+        List<Integer> unsortedList = new ArrayList<>(list);
+        Collections.sort(list);                                                                     //O(n*log(n))
+        int maxQuantityOfRepeats = 1;
+        int maxRepeatingNumber = list.get(0);
+        int quantityOfRepeats = 1;
+        for (int i = 1; i < list.size(); i++) {                                                     //O(n)
+            if (list.get(i).equals(list.get(i - 1))) {
+                quantityOfRepeats++;
+                if (i == list.size() - 1 && maxQuantityOfRepeats < quantityOfRepeats) {
+                    maxQuantityOfRepeats = quantityOfRepeats;
+                    maxRepeatingNumber = list.get(i - 1);
                 }
-                list.add(numberInString);
-                line = reader.readLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        int[] array = new int[maxElementInString - minElementInString + 1];
-        for (int element : list) {                                                               //O(n)
-            array[element - minElementInString]++;
-        }
-        int theSmallest = 0;
-        int maxNumberOfRepeatingElement = 0;
-        for (int i = 0; i < array.length; i++) {                                                 //O(n)
-            if (array[i] > maxNumberOfRepeatingElement) {
-                maxNumberOfRepeatingElement = array[i];
-                theSmallest = i + minElementInString;
-            } else if (array[i] == maxNumberOfRepeatingElement && i + minElementInString < theSmallest) {
-                theSmallest = i + minElementInString;
-            }
-        }
-        int numberOfTheSmallestElement = 0;
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputName))) {
-            for (int element : list) {                                                           //O(n)
-                if (element != theSmallest) {
-                    bufferedWriter.write(element + "\n");
-                } else {
-                    numberOfTheSmallestElement++;
+            } else {
+                if (maxQuantityOfRepeats < quantityOfRepeats) {
+                    maxQuantityOfRepeats = quantityOfRepeats;
+                    maxRepeatingNumber = list.get(i - 1);
                 }
+                quantityOfRepeats = 1;
             }
-            while (numberOfTheSmallestElement != 0) {
-                bufferedWriter.write(theSmallest + "\n");
-                numberOfTheSmallestElement--;
-            }
-        } catch (IOException e) {
-            e.getMessage();
         }
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputName));
+        for (int element : unsortedList) {                                                          //O(n)
+            if (element != maxRepeatingNumber) {
+                bufferedWriter.write(element + "\n");
+            }
+        }
+        while (maxQuantityOfRepeats != 0) {
+            bufferedWriter.write(maxRepeatingNumber + "\n");
+            maxQuantityOfRepeats--;
+        }
+        bufferedWriter.close();
     }
 
     /**
