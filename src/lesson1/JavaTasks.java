@@ -250,7 +250,7 @@ public class JavaTasks {
         Pattern pattern = Pattern.compile("[1-9][0-9]*");
         BufferedReader reader = new BufferedReader(new FileReader(input));
         String line = reader.readLine();
-        if (line == null || !pattern.matcher(line).matches()) throw new IllegalArgumentException();
+        if (line == null) throw new IllegalArgumentException();
         while (line != null) {                                                                      //O(n)
             if (!pattern.matcher(line).matches()) throw new IllegalArgumentException();
             list.add(Integer.parseInt(line));
