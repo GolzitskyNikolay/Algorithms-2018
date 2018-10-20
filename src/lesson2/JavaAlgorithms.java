@@ -3,7 +3,11 @@ package lesson2;
 import kotlin.NotImplementedError;
 import kotlin.Pair;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 public class JavaAlgorithms {
@@ -81,7 +85,7 @@ public class JavaAlgorithms {
      * Х   Х
      * Х х Х
      * <p>
-     * Трудоёмкость = О(n), ресурсоёмкость = O(n).
+     * Трудоёмкость = О(n*m), ресурсоёмкость = O(n).
      */
     static public int josephTask(int menNumber, int choiceInterval) {
         if (menNumber < 1 || choiceInterval < 1) throw new IllegalArgumentException();
@@ -199,7 +203,134 @@ public class JavaAlgorithms {
      * В файле буквы разделены пробелами, строки -- переносами строк.
      * Остальные символы ни в файле, ни в словах не допускаются.
      */
-    static public Set<String> baldaSearcher(String inputName, Set<String> words) {
-        throw new NotImplementedError();
+    static public Set<String> baldaSearcher(String inputName, Set<String> words) throws Exception {
+        Set<String> result = new HashSet<>();
+        List<CharInWord> chars = new ArrayList<>();
+        Pattern pattern = Pattern.compile("([А-Я]|Ё|[A-Z])( ([А-Я]|Ё|[A-Z]))*");
+        BufferedReader reader = new BufferedReader(new FileReader(new File(inputName)));
+        String line = reader.readLine();
+        if (line == null) throw new IllegalAccessException();
+        int countOfColumns = line.split(" ").length;
+        int countOfLines = 0;
+        while (line != null) {                                                                  //O(n)
+            String[] strings = line.split(" ");
+            if (!pattern.matcher(line).matches() || strings.length != countOfColumns)
+                throw new IllegalArgumentException();
+            Arrays.asList(strings).forEach(e -> chars.add(new CharInWord(e)));
+            countOfLines++;
+            line = reader.readLine();
+        }
+        reader.close();
+        for (String word : words) {
+            List<Integer> indexesOfCharsThatCanBeInOurWord = new LinkedList<>();
+            Set<Integer> indexesOfMistakingChars = new HashSet<>();
+            int i = 0;
+            int j = 0;
+            while (i < chars.size()) {                               //перебираем каждый символ:  О(n)
+                boolean removeWrongChars = false;
+                if (chars.get(i).getSymbol().equals(String.valueOf(word.charAt(j)))) {
+                    indexesOfCharsThatCanBeInOurWord.add(i);
+                    int firstIndexOfI = i;
+                    j++;
+                    i = findNextIndex(chars, countOfColumns, countOfLines, i,
+                            indexesOfCharsThatCanBeInOurWord, word, j, indexesOfMistakingChars);
+                    if (i != firstIndexOfI) {
+                        chars.get(firstIndexOfI).setWeUsedKey();
+                        for (int k = 2; k < word.length(); k++) {
+                            j++;
+                            int copyI = i;
+                            i = findNextIndex(chars, countOfColumns, countOfLines,
+                                    i, indexesOfCharsThatCanBeInOurWord, word, j, indexesOfMistakingChars);
+                            if (copyI == i) {
+                                indexesOfMistakingChars.add(i);
+                                chars.get(i).setWeUsedKey();
+                                indexesOfCharsThatCanBeInOurWord.remove(j - 1);
+                                j = 0;
+                                i = firstIndexOfI;
+                                removeWrongChars = true;
+                                break;
+                            }
+                        }
+                        new HashSet<>(indexesOfCharsThatCanBeInOurWord).forEach(e -> chars.get(e).setWeUsedKey());
+                        indexesOfCharsThatCanBeInOurWord.clear();
+                        if (!removeWrongChars) {
+                            result.add(word);
+                            break;
+                        }
+                    } else {
+                        j = 0;
+                        indexesOfCharsThatCanBeInOurWord.clear();
+                    }
+                }
+                if (!removeWrongChars) {
+                    i++;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Проверяет все символы вокруг исходного символа с индексом "i", если этот символ совпадает с
+     * буквой из слова, то выбирает его в качестве следующего и помечает как уже использованный.
+     */
+    private static int findNextIndex(List<CharInWord> list, int countOfColumns, int countOfLines, int i,
+                                     List<Integer> indexesOfCharsThatCanBeInOurWord, String word, int j,
+                                     Set<Integer> indexesOfMistakingChars) {
+        if (i % countOfColumns != countOfColumns - 1 && countOfColumns > 1 && !list.get(i + 1).getWeUsedSymbol()
+                && list.get(i + 1).getSymbol().equals(String.valueOf(word.charAt(j))) &&
+                !indexesOfMistakingChars.contains(i + 1)) {
+            indexesOfCharsThatCanBeInOurWord.add(i + 1);
+            list.get(i + 1).setWeUsedKey();
+            return i + 1;
+        }
+        if (i % countOfColumns != 1 && countOfColumns > 1 && i > 1 && !list.get(i - 1).getWeUsedSymbol() &&
+                list.get(i - 1).getSymbol().equals(String.valueOf(word.charAt(j)))
+                && !indexesOfMistakingChars.contains(i - 1)) {
+            indexesOfCharsThatCanBeInOurWord.add(i - 1);
+            list.get(i - 1).setWeUsedKey();
+            return i - 1;
+        }
+        if (i >= countOfColumns && !list.get(i - countOfColumns).getWeUsedSymbol() &&
+                list.get(i - countOfColumns).getSymbol().equals(String.valueOf(word.charAt(j)))
+                && !indexesOfMistakingChars.contains(i - countOfColumns)) {
+            indexesOfCharsThatCanBeInOurWord.add(i - countOfColumns);
+            list.get(i - countOfColumns).setWeUsedKey();
+            return i - countOfColumns;
+        }
+        if (i <= countOfColumns * (countOfLines - 1) - 1 && !list.get(i + countOfColumns).getWeUsedSymbol() &&
+                list.get(i + countOfColumns).getSymbol().equals(String.valueOf(word.charAt(j))) &&
+                !indexesOfMistakingChars.contains(i + countOfColumns)) {
+            indexesOfCharsThatCanBeInOurWord.add(i + countOfColumns);
+            list.get(i + countOfColumns).setWeUsedKey();
+            return i + countOfColumns;
+        }
+        return i;
+    }
+
+    /**
+     * Используется, чтобы при поиске слова избегать
+     * повтора одних и тех же символов.
+     */
+    private static class CharInWord {
+        private String symbol;
+        private boolean weUsedSymbol;
+
+        private CharInWord(String key) {
+            this.symbol = key;
+            this.weUsedSymbol = false;
+        }
+
+        private String getSymbol() {
+            return symbol;
+        }
+
+        private boolean getWeUsedSymbol() {
+            return weUsedSymbol;
+        }
+
+        private void setWeUsedKey() {
+            weUsedSymbol = !weUsedSymbol;
+        }
     }
 }
