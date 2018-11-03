@@ -47,11 +47,82 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
     /**
      * Удаление элемента в дереве
      * Средняя
+     * <p>
+     * Т.к. операция поиска требует О(log n) операций, а для перемещения элементов нужно О(m) операций =>
+     * Трудоёмкость = О(log n).
      */
     @Override
     public boolean remove(Object o) {
-        // TODO
-        throw new NotImplementedError();
+        @SuppressWarnings("unchecked")
+        T value = (T) o;
+        int size = size();
+        if (root.value.equals(value)) {
+            removing(root, false, true);
+        }
+        searchAndRemove(root, value);
+        return size != size();
+    }
+
+    private void searchAndRemove(Node<T> current, T value) {    // Поиск занимает О(log n) операций
+        if (value.compareTo(current.value) < 0) {
+            if (current.left != null) {
+                if (current.left.value.equals(value)) {
+                    removing(current, true, false);
+                } else {
+                    searchAndRemove(current.left, value);
+                }
+            }
+        } else {
+            if (current.right != null) {
+                if (current.right.value.equals(value)) {
+                    removing(current, false, false);
+                } else {
+                    searchAndRemove(current.right, value);
+                }
+            }
+        }
+    }
+
+    private void removing(Node<T> current, boolean forLeft, boolean forRoot) {
+        Node<T> node;
+        if (forRoot) {
+            node = root;
+        } else if (forLeft) {
+            node = current.left;
+        } else {
+            node = current.right;
+        }
+        if (node.left != null) {
+            Node<T> rightSideOfLeftPartOfRemovingNode = node.left.right;
+            node.left.right = node.right;
+            node = node.left;
+            size--;
+            if (node.right == null) {
+                node.right = rightSideOfLeftPartOfRemovingNode;
+            } else {
+                addRightSide(node.right, rightSideOfLeftPartOfRemovingNode);   // О(m) операций
+            }
+        } else {
+            size--;
+            node = node.right;
+        }
+
+        if (forRoot) {
+            root = node;
+        } else if (forLeft) {
+            current.left = node;
+        } else {
+            current.right = node;
+        }
+    }
+
+    // Для перемещения элементов нужно О(m) операций.
+    private void addRightSide(Node<T> current, Node<T> rightSideOfLeftPartOfRemovingNode) {
+        if (current.left == null) {
+            current.left = rightSideOfLeftPartOfRemovingNode;
+        } else {
+            addRightSide(current.left, rightSideOfLeftPartOfRemovingNode);
+        }
     }
 
     @Override
@@ -223,6 +294,7 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         private Node<T> current = null;
 
         private BinaryTreeIterator() {
+
         }
 
         /**
@@ -230,8 +302,7 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
          * Средняя
          */
         private Node<T> findNext() {
-            // TODO
-            throw new NotImplementedError();
+            return null;
         }
 
         @Override
