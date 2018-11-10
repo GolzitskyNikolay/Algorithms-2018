@@ -49,7 +49,7 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
      * Средняя
      * <p>
      * Т.к. операция поиска требует О(log n) операций, а для перемещения элементов нужно О(m) операций =>
-     * Трудоёмкость = О(log n).
+     * Трудоёмкость = О(log n), ресурсоёмкость = О(1).
      */
     @Override
     public boolean remove(Object o) {
@@ -63,17 +63,17 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         return size != size();
     }
 
-    private void searchAndRemove(Node<T> current, T value) {    // Поиск занимает О(log n) операций
-        if (value.compareTo(current.value) < 0) {
-            if (current.left != null) {
-                if (current.left.value.equals(value)) {
-                    removing(current, true, false);
-                } else {
-                    searchAndRemove(current.left, value);
+    private void searchAndRemove(Node<T> current, T value) {          // Поиск занимает О(log n) операций
+        if (current != null) {
+            if (value.compareTo(current.value) < 0) {
+                if (current.left != null) {
+                    if (current.left.value.equals(value)) {
+                        removing(current, true, false);
+                    } else {
+                        searchAndRemove(current.left, value);
+                    }
                 }
-            }
-        } else {
-            if (current.right != null) {
+            } else if (current.right != null) {
                 if (current.right.value.equals(value)) {
                     removing(current, false, false);
                 } else {
@@ -183,8 +183,8 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
      * Найти множество всех элементов меньше заданного
      * Сложная
      * <p>
-     * Трудоёмкость = О(N);
-     * Ресурсоёмкость = O(N).
+     * Трудоёмкость = О(n);
+     * Ресурсоёмкость = O(n).
      */
     @NotNull
     @Override
@@ -227,8 +227,8 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
      * Найти множество всех элементов больше или равных заданного
      * Сложная
      * <p>
-     * Трудоёмкость = О(N);
-     * Ресурсоёмкость = O(N).
+     * Трудоёмкость = О(n);
+     * Ресурсоёмкость = O(n).
      */
     @NotNull
     @Override
@@ -292,9 +292,7 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
     public class BinaryTreeIterator implements Iterator<T> {
 
         private Node<T> current;
-        private Node<T> next;
         private LinkedList<Node<T>> elements;
-        private boolean getFirstElement = true;
 
         private BinaryTreeIterator() {
             elements = new LinkedList<>();
@@ -308,22 +306,31 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         /**
          * Поиск следующего элемента
          * Средняя
-         *
-         * В лучшем случае трудоёмкость = О(1), в среднем = О(n).
+         * <p>
+         * В лучшем случае трудоёмкость = О(1), в среднем = О(m).
          */
-        private Node<T> findNext() {
-            if (getFirstElement) {
+        private Node<T> findNext(boolean fromNext) {
+            if (current == null) {
+                if (fromNext) {
+                    return elements.pollFirst();
+                }
                 return elements.getFirst();
             }
+
             Node<T> result = current;
-            if (result.right == null && elements.size() != 0) {
-                result = elements.getFirst();
-                elements.remove(0);
+
+            if (result.right == null && elements.size() != 0) {  // если нет правого потомка, то переходим
+                result = elements.getFirst();                    // к родителю => T = O(1)
+                if (fromNext) {
+                    elements.remove(0);
+                }
             } else {
                 result = result.right;
-                if (result != null) {
-                    while (result.left != null) {
-                        elements.add(0, result);
+                if (result != null) {                // ecли у правого потомка нет левых потомков, то T = O(1),
+                    while (result.left != null) {    // а иначе - находим самого маленького потомка => T = O(m)
+                        if (fromNext) {
+                            elements.add(0, result);
+                        }
                         result = result.left;
                     }
                 }
@@ -333,18 +340,12 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
 
         @Override
         public boolean hasNext() {
-            return next != null;
+            return findNext(false) != null;
         }
 
         @Override
         public T next() {
-            if (getFirstElement) {
-                current = findNext();
-                getFirstElement = false;
-                elements.remove(0);
-            } else {
-                current = findNext();
-            }
+            current = findNext(true);
             if (current == null) throw new NoSuchElementException();
             return current.value;
         }
@@ -352,11 +353,11 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         /**
          * Удаление следующего элемента
          * Сложная
+         * Т = O(log(n)).
          */
         @Override
         public void remove() {
-            // TODO
-            throw new NotImplementedError();
+            BinaryTree.this.remove(current.value);
         }
     }
 }

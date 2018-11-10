@@ -21,7 +21,6 @@ abstract class AbstractHeadTailTest {
         tree.add(6)
     }
 
-
     protected fun doHeadSetTest() {
         var set: SortedSet<Int> = tree.headSet(5)
         assertEquals(true, set.contains(1))
