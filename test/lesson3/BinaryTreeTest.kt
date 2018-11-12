@@ -3,9 +3,7 @@ package lesson3
 import org.junit.jupiter.api.Tag
 import kotlin.test.Test
 import java.util.*
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class BinaryTreeTest {
     private fun testAdd(create: () -> CheckableSortedSet<Int>) {
@@ -56,12 +54,14 @@ class BinaryTreeTest {
             for (i in 1..20) {
                 list.add(random.nextInt(100))
             }
+
             val treeSet = TreeSet<Int>()
             val binarySet = create()
             for (element in list) {
                 treeSet += element
                 binarySet += element
             }
+
             val toRemove = list[random.nextInt(list.size)]
             treeSet.remove(toRemove)
             binarySet.remove(toRemove)
@@ -96,6 +96,7 @@ class BinaryTreeTest {
             for (i in 1..20) {
                 list.add(random.nextInt(100))
             }
+
             val treeSet = TreeSet<Int>()
             val binarySet = create()
             for (element in list) {
@@ -130,12 +131,14 @@ class BinaryTreeTest {
             for (i in 1..20) {
                 list.add(random.nextInt(100))
             }
+
             val treeSet = TreeSet<Int>()
             val binarySet = create()
             for (element in list) {
                 treeSet += element
                 binarySet += element
             }
+
             val toRemove = list[random.nextInt(list.size)]
             treeSet.remove(toRemove)
             println("Removing $toRemove from $list")

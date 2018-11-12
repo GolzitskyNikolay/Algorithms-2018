@@ -48,8 +48,8 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
      * Удаление элемента в дереве
      * Средняя
      * <p>
-     * Т.к. операция поиска требует О(log n) операций, а для перемещения элементов нужно О(m) операций =>
-     * Трудоёмкость = О(log n), ресурсоёмкость = О(1).
+     * Трудоёмкость: в среднем = О(log n), в худшем случае = О(n).
+     * Ресурсоёмкость = О(1).
      */
     @Override
     public boolean remove(Object o) {
@@ -92,20 +92,31 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         } else {
             node = current.right;
         }
-        if (node.left != null) {
-            Node<T> rightSideOfLeftPartOfRemovingNode = node.left.right;
-            node.left.right = node.right;
-            node = node.left;
-            size--;
-            if (node.right == null) {
-                node.right = rightSideOfLeftPartOfRemovingNode;
-            } else {
-                addRightSide(node.right, rightSideOfLeftPartOfRemovingNode);   // О(m) операций
-            }
-        } else {
-            size--;
+
+        if (node.left == null && node.right == null) {
+            node = null;
+        } else if (node.left == null) {
             node = node.right;
+        } else if (node.right == null) {
+            node = node.left;
+        } else {
+            Node<T> rightSideOfRemovingNode = node.right;
+            Node<T> leftSideOfRemovingNode = node.left;
+            if (node.right.left == null) {
+                node = node.right;
+                node.left = leftSideOfRemovingNode;
+            } else if (node.left.right == null) {
+                node = node.left;
+                node.right = rightSideOfRemovingNode;
+            } else {
+                Node[] newNode = new Node[1];
+                searchMinElementFromRightChildren(rightSideOfRemovingNode, newNode);
+                node = newNode[0];                       // заменяем удаляемый элемент на минимальный
+                node.right = rightSideOfRemovingNode;
+                node.left = leftSideOfRemovingNode;
+            }
         }
+        size--;
 
         if (forRoot) {
             root = node;
@@ -116,12 +127,16 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         }
     }
 
-    // Для перемещения элементов нужно О(m) операций.
-    private void addRightSide(Node<T> current, Node<T> rightSideOfLeftPartOfRemovingNode) {
-        if (current.left == null) {
-            current.left = rightSideOfLeftPartOfRemovingNode;
+    /**
+     * Ищем минимальный элемент справа от удаляемого => Т = О(m), где
+     * m - высота поддерева от правого потомка удаляемого элемента до его минимального потомка.
+     */
+    private void searchMinElementFromRightChildren(Node<T> current, Node[] newNode) {
+        if (current.left.left == null) {
+            newNode[0] = current.left;
+            current.left = current.left.right;
         } else {
-            addRightSide(current.left, rightSideOfLeftPartOfRemovingNode);
+            searchMinElementFromRightChildren(current.left, newNode);
         }
     }
 
@@ -292,9 +307,13 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
     public class BinaryTreeIterator implements Iterator<T> {
 
         private Node<T> current;
+        private Node<T> parent;
+        private LinkedList<Node<T>> rememberParents; // вершины, правые потомки которых имеют левые потомки
         private LinkedList<Node<T>> elements;
 
         private BinaryTreeIterator() {
+            current = null;
+            rememberParents = new LinkedList<>();
             elements = new LinkedList<>();
             Node<T> node = root;
             while (node != null) {
@@ -312,24 +331,44 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         private Node<T> findNext(boolean fromNext) {
             if (current == null) {
                 if (fromNext) {
+                    if (elements.size() == 1) {
+                        parent = null;
+                    } else {
+                        parent = elements.get(1);
+                    }
                     return elements.pollFirst();
                 }
-                return elements.getFirst();
+                if (elements.size() == 0) return null;
+                else return elements.getFirst();
             }
 
             Node<T> result = current;
 
             if (result.right == null && elements.size() != 0) {  // если нет правого потомка, то переходим
                 result = elements.getFirst();                    // к родителю => T = O(1)
+
                 if (fromNext) {
                     elements.remove(0);
+                    if (rememberParents.size() != 0 && (rememberParents.getFirst().right == result ||
+                            rememberParents.getFirst().left == result)) {
+                        parent = rememberParents.pollFirst();
+                    } else if (elements.size() != 0) {
+                        parent = elements.getFirst();
+                    } else {
+                        parent = null;
+                    }
                 }
             } else {
                 result = result.right;
-                if (result != null) {                // ecли у правого потомка нет левых потомков, то T = O(1),
-                    while (result.left != null) {    // а иначе - находим самого маленького потомка => T = O(m)
-                        if (fromNext) {
-                            elements.add(0, result);
+                parent = current;
+                if (result != null) {
+                    if (result.left != null && fromNext) {
+                        rememberParents.add(0, current);
+                    }
+                    while (result.left != null) {                 // ecли у правого потомка нет левых потомков,
+                        if (fromNext) {                           // то T = O(1), а иначе - находим самого
+                            elements.add(0, result);        // маленького потомка => T = O(m)
+                            parent = elements.getFirst();
                         }
                         result = result.left;
                     }
@@ -353,11 +392,17 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         /**
          * Удаление следующего элемента
          * Сложная
-         * Т = O(log(n)).
+         * <p>
+         * Т = О(m), где m - высота поддерева от правого потомка удаляемого элемента
+         * до его минимального потомка.
          */
         @Override
         public void remove() {
-            BinaryTree.this.remove(current.value);
+            if (parent == null) {
+                removing(current, false, true);
+            } else {
+                searchAndRemove(parent, current.value);
+            }
         }
     }
 }
