@@ -8,9 +8,24 @@ import java.util.*;
 // Attention: comparable supported but comparator is not
 @SuppressWarnings("WeakerAccess")
 public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implements CheckableSortedSet<T> {
+    protected Node<T> root;
+    protected Node<T> subRoot;
+    protected int size = 0;
+    protected int subSize = 0;
+    private T fromElement;
+    private T toElement;
 
-    private Node<T> root = null;
-    private int size = 0;
+    public int heightOfBinaryTree() {
+        return forHeightOfBinaryTree(root);
+    }
+
+    private int forHeightOfBinaryTree(Node<T> node) {
+        if (node == null) {
+            return 0;
+        } else {
+            return 1 + Math.max(forHeightOfBinaryTree(node.left), forHeightOfBinaryTree(node.right));
+        }
+    }
 
     @Override
     public boolean add(T t) {
@@ -29,7 +44,12 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
             assert closest.right == null;
             closest.right = newNode;
         }
+
         size++;
+        if (toElement != null && newNode.value.compareTo(toElement) < 0
+                || fromElement != null && newNode.value.compareTo(fromElement) >= 0) {
+            subSize++;
+        }
         return true;
     }
 
@@ -58,12 +78,13 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         int size = size();
         if (root.value.equals(value)) {
             removing(root, false, true);
+        } else {
+            searchAndRemove(root, value);
         }
-        searchAndRemove(root, value);
         return size != size();
     }
 
-    private void searchAndRemove(Node<T> current, T value) {          // Поиск занимает О(log n) операций
+    private void searchAndRemove(Node<T> current, T value) {        // Поиск занимает О(log n) операций
         if (current != null) {
             if (value.compareTo(current.value) < 0) {
                 if (current.left != null) {
@@ -93,6 +114,14 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
             node = current.right;
         }
 
+        size--;
+        if (toElement != null && node.value.compareTo(toElement) < 0 ||
+                fromElement != null && node.value.compareTo(fromElement) >= 0) {
+            subSize--;
+        }
+
+        Node<T> copyOfNodeForSubRoot = new Node<>(node.value);
+
         if (node.left == null && node.right == null) {
             node = null;
         } else if (node.left == null) {
@@ -109,14 +138,11 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
                 node = node.left;
                 node.right = rightSideOfRemovingNode;
             } else {
-                Node[] newNode = new Node[1];
-                searchMinElementFromRightChildren(rightSideOfRemovingNode, newNode);
-                node = newNode[0];                       // заменяем удаляемый элемент на минимальный
+                node = searchMinElementFromRightChildren(rightSideOfRemovingNode);
                 node.right = rightSideOfRemovingNode;
                 node.left = leftSideOfRemovingNode;
             }
         }
-        size--;
 
         if (forRoot) {
             root = node;
@@ -125,18 +151,23 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         } else {
             current.right = node;
         }
+
+        if (subRoot != null && subRoot.value == copyOfNodeForSubRoot.value) {
+            subRoot = node;
+        }
     }
 
     /**
      * Ищем минимальный элемент справа от удаляемого => Т = О(m), где
      * m - высота поддерева от правого потомка удаляемого элемента до его минимального потомка.
      */
-    private void searchMinElementFromRightChildren(Node<T> current, Node[] newNode) {
+    private Node<T> searchMinElementFromRightChildren(Node<T> current) {
         if (current.left.left == null) {
-            newNode[0] = current.left;
+            Node<T> result = current.left;
             current.left = current.left.right;
+            return result;
         } else {
-            searchMinElementFromRightChildren(current.left, newNode);
+            return searchMinElementFromRightChildren(current.left);
         }
     }
 
@@ -177,101 +208,6 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         return size;
     }
 
-    @Nullable
-    @Override
-    public Comparator<? super T> comparator() {
-        return null;
-    }
-
-    /**
-     * Для этой задачи нет тестов (есть только заготовка subSetTest), но её тоже можно решить и их написать
-     * Очень сложная
-     */
-    @NotNull
-    @Override
-    public SortedSet<T> subSet(T fromElement, T toElement) {
-        // TODO
-        throw new NotImplementedError();
-    }
-
-    /**
-     * Найти множество всех элементов меньше заданного
-     * Сложная
-     * <p>
-     * Трудоёмкость = О(n);
-     * Ресурсоёмкость = O(n).
-     */
-    @NotNull
-    @Override
-    public SortedSet<T> headSet(T toElement) {
-        SortedSet<T> result = new TreeSet<>();
-        searchForHeadSet(root, toElement, result);
-        return result;
-    }
-
-    private void searchForHeadSet(Node<T> current, T value, Set<T> result) {
-        int comparison = value.compareTo(current.value);
-        if (comparison < 0) {
-            if (current.left != null) {
-                searchForHeadSet(current.left, value, result);
-            }
-        } else {
-            if (current.left != null) {
-                addElements(current.left, result);
-            }
-            if (comparison > 0) {
-                result.add(current.value);
-                if (current.right != null) {
-                    searchForHeadSet(current.right, value, result);
-                }
-            }
-        }
-    }
-
-    private void addElements(Node<T> current, Set<T> result) {
-        result.add(current.value);
-        if (current.left != null) {
-            addElements(current.left, result);
-        }
-        if (current.right != null) {
-            addElements(current.right, result);
-        }
-    }
-
-    /**
-     * Найти множество всех элементов больше или равных заданного
-     * Сложная
-     * <p>
-     * Трудоёмкость = О(n);
-     * Ресурсоёмкость = O(n).
-     */
-    @NotNull
-    @Override
-    public SortedSet<T> tailSet(T fromElement) {
-        SortedSet<T> result = new TreeSet<>();
-        searchForTailSet(root, fromElement, result);
-        return result;
-    }
-
-    private void searchForTailSet(Node<T> current, T value, Set<T> result) {
-        int comparison = value.compareTo(current.value);
-        if (comparison > 0) {
-            if (current.right != null) {
-                searchForTailSet(current.right, value, result);
-            }
-        } else {
-            result.add(current.value);
-            if (current.right != null) {
-                addElements(current.right, result);
-            }
-            if (comparison < 0) {
-                if (current.left != null) {
-                    searchForTailSet(current.left, value, result);
-                }
-            }
-        }
-    }
-
     @Override
     public T first() {
         if (root == null) throw new NoSuchElementException();
@@ -292,6 +228,126 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         return current.value;
     }
 
+
+    @Nullable
+    @Override
+    public Comparator<? super T> comparator() {
+        return null;
+    }
+
+    /**
+     * Для этой задачи нет тестов (есть только заготовка subSetTest), но её тоже можно решить и их написать
+     * Очень сложная
+     */
+    @NotNull
+    @Override
+    public SortedSet<T> subSet(T fromElement, T toElement) {
+        throw new NotImplementedError();
+    }
+
+    /**
+     * Найти множество всех элементов меньше заданного
+     * Сложная
+     * <p>
+     * Трудоёмкость = О(log n).
+     * Ресурсоёмкость = О(1).
+     */
+    @NotNull
+    @Override
+    public SortedSet<T> headSet(T toElement) {
+        return searchForHeadSet(root, toElement);
+    }
+
+    private SubTree searchForHeadSet(Node<T> current, T value) {
+        int comparison = value.compareTo(current.value);
+        if (comparison < 0) {
+            if (current.left != null) {
+                return searchForHeadSet(current.left, value);
+            } else throw new IllegalArgumentException();
+        } else {
+            if (comparison > 0) {
+                subRoot = current;
+            } else if (current.left != null) {
+                subRoot = current.left;
+            } else {
+                subRoot = null;
+            }
+            fromElement = null;
+            toElement = value;
+            return new SubTree();
+        }
+    }
+
+    private void countSubSize(Node<T> current) {
+        if (toElement != null) {
+            if (current.value.compareTo(toElement) == 0 && current.left != null) {
+                countSubSize(current.left);
+            } else {
+                if (fromElement == null || current.value.compareTo(fromElement) >= 0) {
+                    subSize++;
+                    if (current.left != null && current.left.value.compareTo(toElement) <= 0) {
+                        countSubSize(current.left);
+                    }
+                    if (current.right != null && current.right.value.compareTo(toElement) <= 0) {
+                        countSubSize(current.right);
+                    }
+                } else {
+                    Node<T> resultOfFind = BinaryTree.this.find(current, fromElement);
+                    if (resultOfFind != current) {
+                        countSubSize(resultOfFind);
+                    }
+                }
+            }
+        }
+        if (fromElement != null && toElement == null) {
+            if (current.value.compareTo(fromElement) == 0) {
+                subSize++;
+                if (current.right != null) {
+                    countSubSize(current.right);
+                }
+            } else {
+                if (current.value.compareTo(fromElement) > 0) {
+                    subSize++;
+                    if (current.left != null) {
+                        countSubSize(current.left);
+                    }
+                    if (current.right != null) {
+                        countSubSize(current.right);
+                    }
+                } else {
+                    countSubSize(BinaryTree.this.find(current, fromElement));
+                }
+            }
+        }
+    }
+
+    /**
+     * Найти множество всех элементов больше или равных заданного
+     * Сложная
+     * <p>
+     * Трудоёмкость = О(log n).
+     * Ресурсоёмкость = О(1).
+     */
+    @NotNull
+    @Override
+    public SortedSet<T> tailSet(T fromElement) {
+        return searchForTailSet(root, fromElement);
+    }
+
+    private SubTree searchForTailSet(Node<T> current, T value) {
+        int comparison = value.compareTo(current.value);
+        if (comparison > 0) {
+            if (current.right != null) {
+                return searchForHeadSet(current.right, value);
+            } else throw new IllegalArgumentException();
+        } else {
+            subRoot = current;
+            fromElement = value;
+            toElement = null;
+            return new SubTree();
+        }
+    }
+
     private static class Node<T> {
         final T value;
 
@@ -302,6 +358,97 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         Node(T value) {
             this.value = value;
         }
+    }
+
+    class SubTree extends BinaryTree<T> {
+
+        SubTree() {
+            BinaryTree.this.subSize = 0;
+            countSubSize(BinaryTree.this.subRoot);
+        }
+
+        @Override
+        public boolean add(T t) {
+            Node<T> closest = find(t);
+            int comparison = closest == null ? -1 : t.compareTo(closest.value);
+            if (comparison == 0) {
+                return false;
+            }
+            Node<T> newNode = new Node<>(t);
+            if (closest == null) {
+                BinaryTree.this.subRoot = newNode;
+            } else if (comparison < 0) {
+                assert closest.left == null;
+                closest.left = newNode;
+            } else {
+                assert closest.right == null;
+                closest.right = newNode;
+            }
+            BinaryTree.this.size++;
+            BinaryTree.this.subSize++;
+            return true;
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            @SuppressWarnings("unchecked")
+            T value = (T) o;
+            int size = BinaryTree.this.subSize;
+            if (BinaryTree.this.subRoot.value.equals(value)) {
+                removing(BinaryTree.this.subRoot, false, true);
+            } else {
+                searchAndRemove(BinaryTree.this.subRoot, value);
+            }
+            return size != BinaryTree.this.subSize;
+        }
+
+        @Override
+        public int size() {
+            return BinaryTree.this.subSize;
+        }
+
+        @Override
+        public boolean contains(Object o) {
+            @SuppressWarnings("unchecked")
+            T t = (T) o;
+            Node<T> closest = find(t);
+            return closest != null && t.compareTo(closest.value) == 0;
+        }
+
+        private Node<T> find(T value) {
+            if (BinaryTree.this.subRoot == null) return null;
+            return findForSubSet(BinaryTree.this.subRoot, value);
+        }
+
+        private Node<T> findForSubSet(Node<T> start, T value) {
+            int comparison = value.compareTo(start.value);
+            if (toElement != null) {
+                if (comparison == 0) {
+                    if (start.value.compareTo(toElement) < 0) return start;
+                    return null;
+                } else if (comparison < 0) {
+                    if (start.left == null) return start;
+                    return findForSubSet(start.left, value);
+                } else {
+                    if (start.right == null) return start;
+                    return findForSubSet(start.right, value);
+                }
+            }
+            if (fromElement != null) {
+                if (comparison == 0) {
+                    if (start.value.compareTo(fromElement) >= 0) return start;
+                    return null;
+                } else if (comparison < 0) {
+                    if (start.left == null) return start;
+                    return findForSubSet(start.left, value);
+                } else {
+                    if (start.right == null) return start;
+                    return findForSubSet(start.right, value);
+                }
+            }
+            return null;
+        }
+
     }
 
     public class BinaryTreeIterator implements Iterator<T> {
