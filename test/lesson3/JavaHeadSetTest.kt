@@ -40,4 +40,10 @@ class JavaHeadSetTest : AbstractHeadTailTest() {
     fun subSetTest() {
         doSubSetTest()
     }
+
+    @Test
+    @Tag("Impossible")
+    fun subSetRelationTest() {
+        doSubSetRelationTest()
+    }
 }

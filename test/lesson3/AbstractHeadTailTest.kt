@@ -147,5 +147,68 @@ abstract class AbstractHeadTailTest {
     }
 
     protected fun doSubSetTest() {
+        var set: SortedSet<Int> = tree.subSet(4, 9)
+        assertEquals(5, set.size)
+        assertEquals(false, set.contains(1))
+        assertEquals(false, set.contains(2))
+        assertEquals(false, set.contains(3))
+        assertEquals(true, set.contains(4))
+        assertEquals(true, set.contains(5))
+        assertEquals(true, set.contains(6))
+        assertEquals(true, set.contains(7))
+        assertEquals(true, set.contains(8))
+        assertEquals(false, set.contains(9))
+        assertEquals(false, set.contains(10))
+
+        set = tree.subSet(2, 3)
+        assertEquals(1, set.size)
+        assertEquals(false, set.contains(1))
+        assertEquals(true, set.contains(2))
+        assertEquals(false, set.contains(3))
+        assertEquals(false, set.contains(4))
+        assertEquals(false, set.contains(5))
+        assertEquals(false, set.contains(6))
+        assertEquals(false, set.contains(7))
+        assertEquals(false, set.contains(8))
+        assertEquals(false, set.contains(9))
+        assertEquals(false, set.contains(10))
+    }
+
+    protected fun doSubSetRelationTest() {
+        val set: SortedSet<Int> = tree.subSet(2, 7)
+        assertEquals(5, set.size)
+
+        set.remove(4)
+        assertFalse(tree.contains(4))
+        assertEquals(4, set.size)
+        assertEquals(9, tree.size)
+
+        set.add(3)
+        assertTrue(set.contains(3))
+        assertTrue(tree.contains(3))
+        assertEquals(4, set.size)
+        assertEquals(9, tree.size)
+
+        tree.add(4)
+        assertTrue(set.contains(4))
+        assertTrue(tree.contains(4))
+        assertEquals(10, tree.size)
+        assertEquals(5, set.size)
+
+        tree.remove(6)
+        assertFalse(set.contains(6))
+        assertEquals(9, tree.size)
+        assertEquals(4, set.size)
+
+        tree.add(12)
+        assertFalse(set.contains(12))
+        assertEquals(4, set.size)
+        assertEquals(10, tree.size)
+
+        set.remove(5)
+        assertFalse(set.contains(5))
+        assertFalse(tree.contains(5))
+        assertEquals(3, set.size)
+        assertEquals(9, tree.size)
     }
 }

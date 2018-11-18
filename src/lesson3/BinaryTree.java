@@ -46,7 +46,12 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         }
 
         size++;
-        if (toElement != null && newNode.value.compareTo(toElement) < 0
+        if (toElement != null && fromElement != null) {
+            if (newNode.value.compareTo(toElement) < 0 &&
+                    newNode.value.compareTo(fromElement) >= 0) {
+                subSize++;
+            }
+        } else if (toElement != null && newNode.value.compareTo(toElement) < 0
                 || fromElement != null && newNode.value.compareTo(fromElement) >= 0) {
             subSize++;
         }
@@ -115,7 +120,12 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
         }
 
         size--;
-        if (toElement != null && node.value.compareTo(toElement) < 0 ||
+        if (toElement != null && fromElement != null) {
+            if (node.value.compareTo(toElement) < 0 &&
+                    node.value.compareTo(fromElement) >= 0) {
+                subSize--;
+            }
+        } else if (toElement != null && node.value.compareTo(toElement) < 0 ||
                 fromElement != null && node.value.compareTo(fromElement) >= 0) {
             subSize--;
         }
@@ -242,7 +252,22 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
     @NotNull
     @Override
     public SortedSet<T> subSet(T fromElement, T toElement) {
-        throw new NotImplementedError();
+        if (fromElement.compareTo(toElement) > 0) throw new IllegalArgumentException();
+        return searchForSubSet(root, fromElement, toElement);
+    }
+
+    private SortedSet<T> searchForSubSet(Node<T> current, T fromElement, T toElement) {
+        int comparison = fromElement.compareTo(current.value);
+        if (comparison > 0) {
+            if (current.right != null) {
+                return searchForHeadSet(current.right, fromElement);
+            } else throw new IllegalArgumentException();
+        } else {
+            subRoot = current;
+            this.fromElement = fromElement;
+            this.toElement = toElement;
+            return new SubTree();
+        }
     }
 
     /**
@@ -279,7 +304,33 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
     }
 
     private void countSubSize(Node<T> current) {
-        if (toElement != null) {
+        if (fromElement != null) {
+            if (toElement != null && current.value.compareTo(toElement) == 0) {
+                if (current.left != null) {
+                    countSubSize(current.left);
+                }
+            } else if (current.value.compareTo(fromElement) == 0) {
+                subSize++;
+                if (current.right != null) {
+                    countSubSize(current.right);
+                }
+            } else {
+                if (current.value.compareTo(fromElement) > 0 && (toElement == null ||
+                        current.value.compareTo(toElement) < 0)) {
+                    subSize++;
+                    if (current.left != null) {
+                        countSubSize(current.left);
+                    }
+                    if (current.right != null) {
+                        countSubSize(current.right);
+                    }
+                } else {
+                    countSubSize(BinaryTree.this.find(current, fromElement));
+                }
+            }
+        }
+
+        if (toElement != null && fromElement == null) {
             if (current.value.compareTo(toElement) == 0 && current.left != null) {
                 countSubSize(current.left);
             } else {
@@ -296,26 +347,6 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
                     if (resultOfFind != current) {
                         countSubSize(resultOfFind);
                     }
-                }
-            }
-        }
-        if (fromElement != null && toElement == null) {
-            if (current.value.compareTo(fromElement) == 0) {
-                subSize++;
-                if (current.right != null) {
-                    countSubSize(current.right);
-                }
-            } else {
-                if (current.value.compareTo(fromElement) > 0) {
-                    subSize++;
-                    if (current.left != null) {
-                        countSubSize(current.left);
-                    }
-                    if (current.right != null) {
-                        countSubSize(current.right);
-                    }
-                } else {
-                    countSubSize(BinaryTree.this.find(current, fromElement));
                 }
             }
         }
@@ -422,25 +453,39 @@ public class BinaryTree<T extends Comparable<T>> extends AbstractSet<T> implemen
 
         private Node<T> findForSubSet(Node<T> start, T value) {
             int comparison = value.compareTo(start.value);
-            if (toElement != null) {
-                if (comparison == 0) {
-                    if (start.value.compareTo(toElement) < 0) return start;
+
+            if (BinaryTree.this.fromElement != null) {
+                if (start.value.compareTo(BinaryTree.this.fromElement) == 0 &&
+                        value.compareTo(BinaryTree.this.fromElement) < 0)
                     return null;
+
+                else if (comparison == 0) {
+                    if (BinaryTree.this.toElement == null &&
+                            start.value.compareTo(BinaryTree.this.fromElement) >= 0) return start;
+                    else if (BinaryTree.this.toElement != null &&
+                            start.value.compareTo(BinaryTree.this.fromElement) >= 0 &&
+                            start.value.compareTo(BinaryTree.this.toElement) < 0) return start;
+                    else return null;
+
                 } else if (comparison < 0) {
                     if (start.left == null) return start;
                     return findForSubSet(start.left, value);
+
                 } else {
                     if (start.right == null) return start;
                     return findForSubSet(start.right, value);
                 }
             }
-            if (fromElement != null) {
+
+            if (BinaryTree.this.toElement != null) {
                 if (comparison == 0) {
-                    if (start.value.compareTo(fromElement) >= 0) return start;
+                    if (start.value.compareTo(BinaryTree.this.toElement) < 0) return start;
                     return null;
+
                 } else if (comparison < 0) {
                     if (start.left == null) return start;
                     return findForSubSet(start.left, value);
+
                 } else {
                     if (start.right == null) return start;
                     return findForSubSet(start.right, value);
